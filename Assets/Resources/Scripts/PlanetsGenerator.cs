@@ -43,7 +43,7 @@ public class PlanetsGenerator : MonoBehaviour {
 			bool isPortalGenerated = false;
 			
 			for(int i = 0; i < PlanetsNum; i++){
-				GameObject cubePlanet = GameObject.CreatePrimitive(PrimitiveType.Cube);
+				GameObject cubePlanet = new GameObject();
 				cubePlanet.transform.parent = Parent;
 				cubePlanet.transform.position = Grid.GetCellPositionAtIndex(cellXCoord, cellYCoord, cellZCoord);
 				cubePlanet.transform.localScale = new Vector3(planetSize / Parent.transform.localScale.x, 
@@ -52,11 +52,11 @@ public class PlanetsGenerator : MonoBehaviour {
 				//check rotation
 				Vector3 rotationAxis = (Random.Range(0, 2) == 1) ? Vector3.forward : Vector3.left;
 //				cubePlanet.transform.Rotate(rotationAxis, 90 * Random.Range(0, 4));
-				MeshFilter meshFilter = (MeshFilter)cubePlanet.GetComponent(typeof(MeshFilter));
+				MeshFilter meshFilter = (MeshFilter)cubePlanet.AddComponent(typeof(MeshFilter));
 
 				Color cubeColor = new Color(Random.value, Random.value, Random.value);
-				MeshRenderer renderer = cubePlanet.GetComponent(typeof(MeshRenderer)) as MeshRenderer;
-				renderer.material.shader = Shader.Find ("Diffuse");
+				MeshRenderer renderer = cubePlanet.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
+				renderer.material.shader = Shader.Find ("Grid");
 				renderer.material.color = cubeColor;
 				renderer.castShadows = true;
 				renderer.receiveShadows = true;
@@ -69,7 +69,7 @@ public class PlanetsGenerator : MonoBehaviour {
 					float botLeftY = Random.Range(0.1f, 0.49f);
 					float topRightX = Random.Range(0.1f, 0.49f);
 					float topRightY = Random.Range(0.1f, 0.49f);
-					//meshFilter.mesh = Utils.GenerateBoxMesh(false);
+					meshFilter.mesh = Utils.GenerateBoxMesh(false);
 					Utils.GenerateHoleOnTriangle(meshFilter, Random.Range(0, (meshFilter.mesh.triangles.Length - 1) / 3), DebugTextPrefab);
 					Utils.MakeDoubleSidedMesh(meshFilter.mesh);
 					//MeshHelper.Subdivide(meshFilter.mesh, 32);
@@ -114,7 +114,8 @@ public class PlanetsGenerator : MonoBehaviour {
 						entrance.transform.localPosition = Vector3.zero;
 						//entrance.transform.Rotate(90f, 0f, 0f);
 	//					entrance.transform.Rotate(cubePlanet.transform.rotation.eulerAngles);
-						
+
+						Destroy(cubePlanet.GetComponent<MeshCollider>());
 						MeshCollider collider = cubePlanet.AddComponent(typeof(MeshCollider)) as MeshCollider;
 						collider.convex = false;
 
@@ -214,7 +215,7 @@ public class PlanetsGenerator : MonoBehaviour {
 			GlobalData.FirstGeneration = true;
 
 			foreach(UniverseData.Planet planet in GlobalData.CurrentUniverse.Value.Planets){
-				GameObject cubePlanet = GameObject.CreatePrimitive(PrimitiveType.Cube);
+				GameObject cubePlanet = new GameObject();
 				cubePlanet.name = planet.Name;
 				cubePlanet.transform.parent = Parent;
 				cubePlanet.transform.position = Grid.GetCellPositionAtIndex((int)planet.Position.x, (int)planet.Position.y, (int)planet.Position.z);
@@ -223,9 +224,9 @@ public class PlanetsGenerator : MonoBehaviour {
 				                                              planetSize / Parent.transform.localScale.y, 
 				                                              planetSize / Parent.transform.localScale.z);
 				cubePlanet.transform.rotation = planet.Rotation;
-				MeshFilter meshFilter = (MeshFilter)cubePlanet.GetComponent(typeof(MeshFilter));
+				MeshFilter meshFilter = (MeshFilter)cubePlanet.AddComponent(typeof(MeshFilter));
 				//MeshFilter meshFilter = (MeshFilter)cubePlanet.AddComponent(typeof(MeshFilter));
-				//meshFilter.mesh = Utils.GenerateBoxMesh(false);
+				meshFilter.mesh = Utils.GenerateBoxMesh(false);
 				Utils.GenerateHoleOnTriangle(meshFilter, Random.Range(0, (meshFilter.mesh.triangles.Length - 1) / 3), DebugTextPrefab);
 				Utils.MakeDoubleSidedMesh(meshFilter.mesh);
 
@@ -297,7 +298,7 @@ public class PlanetsGenerator : MonoBehaviour {
 			}
 			
 			foreach(UniverseData.Satelite satelite in GlobalData.CurrentUniverse.Value.Satelites){
-				GameObject cubePlanet = GameObject.CreatePrimitive(PrimitiveType.Cube);
+				GameObject cubePlanet = new GameObject();
 				cubePlanet.name = satelite.Name;
 				cubePlanet.transform.parent = Parent;
 				cubePlanet.transform.position = Grid.GetCellPositionAtIndex((int)satelite.Position.x, (int)satelite.Position.y, (int)satelite.Position.z);

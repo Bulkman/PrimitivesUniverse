@@ -26,10 +26,12 @@ public class AsteroidsSpawner : MonoBehaviour {
 	// Update is called once per frame
 	IEnumerator SpawnAsteroid () {
 		while(true){
+			AsteroidsCount = transform.childCount;
+
 			if(AsteroidsCount < MaxAsteroidsNumber){
 				GameObject asteroid = Instantiate(AsteroidPrefab, rootGrid.GridBoundsCenter + Random.onUnitSphere * rootGrid.GridBoundsSize.x / 2f, Random.rotation) as GameObject;
 				asteroid.transform.parent = transform;
-				AsteroidsCount++;
+
 			}
 
 			yield return new WaitForSeconds(Random.Range(MinSpawnTime, MaxSpawnTime));

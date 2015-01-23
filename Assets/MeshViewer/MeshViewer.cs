@@ -1,4 +1,4 @@
-using UnityEditor;
+/*using UnityEditor;
 using UnityEngine;
 using System.Collections;
 
@@ -352,4 +352,4 @@ public class MeshViewer : EditorWindow {
 		mat.SetRow(2, EditorGUILayout.Vector4Field("2", mat.GetRow(2)));
 		mat.SetRow(3, EditorGUILayout.Vector4Field("3", mat.GetRow(3)));
 	}
-}
+}*/
