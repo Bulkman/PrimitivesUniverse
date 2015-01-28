@@ -29,8 +29,64 @@ public static class Math3D {
 		//set the parent
 		tempChild.parent = tempParent;
 	}
+
+	#region Vector3 extesions
+	public static float Length (this Vector3 v3)
+	{
+		return Mathf.Sqrt ((v3.x * v3.x + v3.y * v3.y + v3.z * v3.z));
+	}
 	
+	public static bool IsUnit (this Vector3 v3, float epsilon)
+	{
+		return Mathf.Abs (v3.Length () - 1f) <= epsilon;
+	}
 	
+	public static Vector3 Perpendicular (this Vector3 v3)
+	{
+		Vector3 result;
+		v3.Perpendicular (out result);
+		return result;
+	}
+	
+	public static void Perpendicular (this Vector3 v3, out Vector3 result)
+	{
+		float num = v3.x * v3.x;
+		float num2 = v3.y * v3.y;
+		float num3 = v3.z * v3.z;
+		if (num < num2)
+		{
+			if (num < num3)
+			{
+				result.x = 0f;
+				result.y = -v3.z;
+				result.z = v3.y;
+			}
+			else
+			{
+				result.z = 0f;
+				result.x = -v3.y;
+				result.y = v3.x;
+			}
+		}
+		else
+		{
+			if (num2 < num3)
+			{
+				result.y = 0f;
+				result.z = -v3.x;
+				result.x = v3.z;
+			}
+			else
+			{
+				result.z = 0f;
+				result.x = -v3.y;
+				result.y = v3.x;
+			}
+		}
+	}
+
+	#endregion
+
 	//increase or decrease the length of vector by size
 	public static Vector3 AddVectorLength(Vector3 vector, float size){
 		

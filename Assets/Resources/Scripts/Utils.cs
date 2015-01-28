@@ -1,9 +1,63 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Poly2Tri;
 
-static class Utils
+public static class Utils
 {
+	public class RandGenerator
+	{
+		public System.Random Random;
+		
+		public RandGenerator( int seed = 0 )
+		{
+			Random = new System.Random( seed );
+		}
+		
+		public float NextFloat0_1()
+		{
+			return (float)Random.NextDouble();
+		}
+		
+		public float NextFloatMinus1_1()
+		{
+			return ( NextFloat0_1() * 2.0f ) - 1.0f;
+		}
+		
+		public float NextFloat( float mi, float ma )
+		{
+			return mi + ( ma - mi ) * NextFloat0_1();
+		}
+		
+		public Vector2 NextVector2Minus1_1()
+		{
+			return new Vector2( NextFloat( -1.0f, 1.0f ), NextFloat( -1.0f, 1.0f ) );
+		}
+		
+		public Vector2 NextVector2( Vector2 mi, Vector2 ma )
+		{
+			return new Vector2( NextFloat( mi.x, ma.x ), NextFloat( mi.y, ma.y ) );
+		}
+		
+		public Vector2 NextVector2( float mi, float ma )
+		{
+			return new Vector2( NextFloat( mi, ma ), NextFloat( mi, ma ) );
+		}
+		
+		public Vector3 NextVector3( Vector3 mi, Vector3 ma )
+		{
+			return new Vector3( NextFloat( mi.x, ma.x ), NextFloat( mi.y, ma.y ), NextFloat( mi.z, ma.z ) );
+		}
+		
+		public Vector4 NextVector4( Vector4 mi, Vector4 ma )
+		{
+			return new Vector4( NextFloat( mi.x, ma.x ), NextFloat( mi.y, ma.y ), NextFloat( mi.z, ma.z ), NextFloat( mi.w, ma.w ) );
+		}
+		
+		public Vector4 NextVector4( float mi, float ma )
+		{
+			return new Vector4( NextFloat( mi, ma ), NextFloat( mi, ma ), NextFloat( mi, ma ),  NextFloat( mi, ma ) );
+		}
+	}       
+
 	public static void Shuffle<T>(this IList<T> list)
 	{
 		int n = list.Count;
@@ -15,6 +69,23 @@ static class Utils
 			list[k] = list[n];
 			list[n] = value;
 		}
+	}
+
+	// возвращает площадь треугольника по координатам вершин
+	// площадь - это половина модуля векторного произведения двух сторон
+	public static float TriangleArea(Vector3 p1, Vector3 p2, Vector3 p3)
+	{
+		return 0.5f * Mathf.Abs(Vector3.Cross(p2 - p1, p3- p1).magnitude);
+	}
+
+	public static string Vector3ToString (Vector3 input)
+	{
+		return string.Format ("({0:F3}, {1:F3}, {2:F3})", new object[]
+		                      {
+			input.x,
+			input.y,
+			input.z
+		});
 	}
 
 	public static void MakeDoubleSidedMesh(Mesh mesh){
