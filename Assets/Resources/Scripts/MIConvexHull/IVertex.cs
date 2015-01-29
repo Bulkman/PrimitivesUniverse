@@ -1,6 +1,6 @@
 ﻿/******************************************************************************
  *
- *    MIConvexHull, Copyright (C) 2013 David Sehnal, Matthew Campbell
+ *    MIConvexHull, Copyright (C) 2014 David Sehnal, Matthew Campbell
  *
  *  This library is free software; you can redistribute it and/or modify it 
  *  under the terms of  the GNU Lesser General Public License as published by 
@@ -24,7 +24,7 @@ namespace MIConvexHull
         /// <summary>
         /// Position of the vertex.
         /// </summary>
-        double[] Position { get; set; }
+        double[] Position { get; }
     }
 
     /// <summary>

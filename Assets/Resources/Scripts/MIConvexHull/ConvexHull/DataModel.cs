@@ -1,6 +1,6 @@
 ﻿/******************************************************************************
  *
- *    MIConvexHull, Copyright (C) 2013 David Sehnal, Matthew Campbell
+ *    MIConvexHull, Copyright (C) 2014 David Sehnal, Matthew Campbell
  *
  *  This library is free software; you can redistribute it and/or modify it 
  *  under the terms of  the GNU Lesser General Public License as published by 
@@ -17,46 +17,7 @@
 namespace MIConvexHull
 {
     using System.Collections.Generic;
-
-    /// <summary>
-    /// Wraps each IVertex to allow marking of nodes.
-    /// </summary>
-    sealed class VertexWrap
-    {
-        /// <summary>
-        /// Ref. to the original vertex.
-        /// </summary>
-        public IVertex Vertex;
-
-        /// <summary>
-        /// Direct reference to PositionData makes IsVertexOverFace faster.
-        /// </summary>
-        public double[] PositionData;
-
-        /// <summary>
-        /// Vertex index.
-        /// </summary>
-        public int Index;
-
-        /// <summary>
-        /// Used mostly to enumerate unique vertices.
-        /// </summary>
-        public bool Marked;
-    }
-
-    /// <summary>
-    /// Compare vertices based on their indices.
-    /// </summary>
-    class VertexWrapComparer : IComparer<VertexWrap>
-    {
-        public static readonly VertexWrapComparer Instance = new VertexWrapComparer();
-
-        public int Compare(VertexWrap x, VertexWrap y)
-        {
-            return x.Index.CompareTo(y.Index);
-        }
-    }
-
+    
     /// <summary>
     /// For deferred face addition.
     /// </summary>
@@ -128,16 +89,21 @@ namespace MIConvexHull
             this.Face = face;
             this.EdgeIndex = edgeIndex;
 
-            uint hashCode = 31;
+            uint hashCode = 23;
 
-            var vs = face.Vertices;
-            for (int i = 0, c = 0; i < dim; i++)
+            unchecked
             {
-                if (i != edgeIndex)
+                var vs = face.Vertices;
+                int i, c = 0;
+                for (i = 0; i < edgeIndex; i++)
                 {
-                    var v = vs[i].Index;
-                    this.Vertices[c++] = v;
-                    hashCode += unchecked(23 * hashCode + (uint)v);
+                    this.Vertices[c++] = vs[i];
+                    hashCode += 31 * hashCode + (uint)vs[i];
+                }
+                for (i = edgeIndex + 1; i < vs.Length; i++)
+                {
+                    this.Vertices[c++] = vs[i];
+                    hashCode += 31 * hashCode + (uint)vs[i];
                 }
             }
 
@@ -158,7 +124,7 @@ namespace MIConvexHull
             var n = dim - 1;
             var av = a.Vertices;
             var bv = b.Vertices;
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < av.Length; i++)
             {
                 if (av[i] != bv[i]) return false;
             }
@@ -173,8 +139,8 @@ namespace MIConvexHull
         /// <param name="b"></param>
         public static void Connect(FaceConnector a, FaceConnector b)
         {
-            a.Face.AdjacentFaces[a.EdgeIndex] = b.Face;
-            b.Face.AdjacentFaces[b.EdgeIndex] = a.Face;
+            a.Face.AdjacentFaces[a.EdgeIndex] = b.Face.Index;
+            b.Face.AdjacentFaces[b.EdgeIndex] = a.Face.Index;
         }
     }
 
@@ -187,38 +153,39 @@ namespace MIConvexHull
         /// <summary>
         /// Initializes a new instance of the <see cref="ConvexFaceInternal"/> class.
         /// </summary>
-        public ConvexFaceInternal(int dimension, VertexBuffer beyondList)
+        public ConvexFaceInternal(int dimension, int index, IndexBuffer beyondList)
         {
-            AdjacentFaces = new ConvexFaceInternal[dimension];
+            Index = index;
+            AdjacentFaces = new int[dimension];
             VerticesBeyond = beyondList;
             Normal = new double[dimension];
-            Vertices = new VertexWrap[dimension];
+            Vertices = new int[dimension];
         }
+
+        /// <summary>
+        /// Index of the face inside the pool.
+        /// </summary>
+        public int Index;
 
         /// <summary>
         /// Gets or sets the adjacent face data.
         /// </summary>
-        public ConvexFaceInternal[] AdjacentFaces;
+        public int[] AdjacentFaces;
 
         /// <summary>
         /// Gets or sets the vertices beyond.
         /// </summary>
-        public VertexBuffer VerticesBeyond;
+        public IndexBuffer VerticesBeyond;
 
         /// <summary>
         /// The furthest vertex.
         /// </summary>
-        public VertexWrap FurthestVertex;
-
-        /////// <summary>
-        /////// Distance to the furthest vertex.
-        /////// </summary>
-        ////public double FurthestDistance;
-
+        public int FurthestVertex;
+                
         /// <summary>
         /// Gets or sets the vertices.
         /// </summary>
-        public VertexWrap[] Vertices;
+        public int[] Vertices;
         
         /// <summary>
         /// Gets or sets the normal vector.
@@ -239,6 +206,8 @@ namespace MIConvexHull
         /// Used to traverse affected faces and create the Delaunay representation.
         /// </summary>
         public int Tag;
+
+        //public int UnprocessedIndex;
 
         /// <summary>
         /// Prev node in the list.

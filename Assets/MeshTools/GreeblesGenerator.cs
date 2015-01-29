@@ -9,13 +9,33 @@ namespace MeshTools {
 	[ExecuteInEditMode]
 	public class GreeblesGenerator : MonoBehaviour {
 
-		public int PointsCount = 8;
+		public class VoronoiRegion
+		{
+			public VoronoiMesh<Vertex2, Cell2, VoronoiEdge<Vertex2, Cell2>> RegionMesh;
+
+			public float Z;
+
+			public Vector3 Normal;
+
+			public ConvexPoly2 ConvexPoly;
+
+			public VoronoiRegion(VoronoiMesh<Vertex2, Cell2, VoronoiEdge<Vertex2, Cell2>> regionMesh, ConvexPoly2 convexPoly, float z, Vector3 normal)
+			{
+				ConvexPoly = convexPoly;
+				RegionMesh = regionMesh;
+				Z = z;
+				Normal = normal;
+			}
+		}
+
+		public int PointsCount = 32;
 
 		public Material VoronoiDebugMaterial;
 
 		private MeshTools meshTools;
 
-		public List<VoronoiMesh<Vertex3, Cell3, VoronoiEdge<Vertex3, Cell3>>> VoronoiRegions { get; private set; }
+		public List<VoronoiRegion> VoronoiRegions { get; private set; }
+		public List<Vector3> VoronoiPoints { get; private set; }
 
 		// Use this for initialization
 		void Start () {
@@ -41,10 +61,14 @@ namespace MeshTools {
 			if(VoronoiRegions != null)
 				VoronoiRegions.Clear();
 
-			VoronoiRegions = new List<VoronoiMesh<Vertex3, Cell3, VoronoiEdge<Vertex3, Cell3>>>(meshTools.PolygonAreas.Count);
+			if(VoronoiPoints != null)
+				VoronoiPoints.Clear();
+
+			VoronoiRegions = new List<VoronoiRegion>(meshTools.PolygonAreas.Count);
+			VoronoiPoints = new List<Vector3>(meshTools.PolygonAreas.Count * 3); //minimum size
 
 			foreach(PolygonArea polyArea in meshTools.PolygonAreas){
-				Vertex3[] vertices = new Vertex3[PointsCount + polyArea.PolygonVertices.Length];
+				Vertex2[] vertices = new Vertex2[PointsCount + polyArea.PolygonVertices.Length + 1];
 
 				//transform to 2D space
 				Vector2[] pointsSet2D = new Vector2[polyArea.PolygonVertices.Length + 1];
@@ -52,11 +76,19 @@ namespace MeshTools {
 				for (int i = 0; i < polyArea.PolygonVertices.Length; i++)
 				{
 					Vector3 tmpVec = transform.TransformPoint(polyArea.ComputeVertex(i));
-					vertices[i] = new Vertex3(tmpVec);
-					pointsSet2D[i] = Quaternion.FromToRotation(polyArea.Normal, Vector3.forward) * tmpVec;
+					VoronoiPoints.Add(tmpVec);
+					tmpVec = Quaternion.FromToRotation(polyArea.Normal, Vector3.forward) * tmpVec;
+					vertices[i] = new Vertex2(tmpVec);
+					pointsSet2D[i] = tmpVec;
 					z = tmpVec.z;
+
+					//bug workaround?
+					if(i == polyArea.PolygonVertices.Length - 1){
+						vertices[i + 1] = new Vertex2(tmpVec * 1.001f);
+						VoronoiPoints.Add(tmpVec * 1.001f);
+					}
 				}
-				pointsSet2D[pointsSet2D.Length - 1] = pointsSet2D[0];
+				//pointsSet2D[pointsSet2D.Length - 1] = pointsSet2D[0];
 
 				//make 2d convex polygon
 				ConvexPoly2 convexPoly = new ConvexPoly2(pointsSet2D);
@@ -64,11 +96,11 @@ namespace MeshTools {
 
 				//generate new points inside
 				for(int k = 0; k < PointsCount; k++){
-					Vector3 additionalPoint = new Vector2(Random.Range(convexPolyBonds.Min.x, convexPolyBonds.Max.x), 
+					Vector3 additionalPoint = new Vector3(Random.Range(convexPolyBonds.Min.x, convexPolyBonds.Max.x), 
 					                                      Random.Range(convexPolyBonds.Min.y, convexPolyBonds.Max.y));
 					int maxAttempts = 1000;
 					int currentAttempt = 0;
-					while(!convexPoly.IsInside(additionalPoint)){
+					while(!convexPoly.ContainsPoint(additionalPoint)){
 						additionalPoint.x = Random.Range(convexPolyBonds.Min.x, convexPolyBonds.Max.x);
 						additionalPoint.y = Random.Range(convexPolyBonds.Min.y, convexPolyBonds.Max.y);
 						//Debug.Log(additionalPoint);
@@ -79,11 +111,29 @@ namespace MeshTools {
 					}
 
 					additionalPoint.z = z;
-					additionalPoint = Quaternion.FromToRotation(Vector3.forward, polyArea.Normal) * additionalPoint;
-					vertices[polyArea.PolygonVertices.Length + k] = new Vertex3(additionalPoint);
+					VoronoiPoints.Add(Quaternion.FromToRotation(Vector3.forward, polyArea.Normal) * additionalPoint);
+					//additionalPoint = Quaternion.FromToRotation(Vector3.forward, polyArea.Normal) * additionalPoint;
+					vertices[polyArea.PolygonVertices.Length + 1 + k] = new Vertex2(additionalPoint);
 				}
-				
-				VoronoiRegions.Add(VoronoiMesh.Create<Vertex3, Cell3>(vertices));
+
+//				Vector3 tmpVert = vertices[0].ToVector3();
+//				System.Array.Sort(vertices, delegate(Vertex3 v1, Vertex3 v2) 
+//				           {
+//					float angle1 = Math3D.SignedVectorAngle(v1.ToVector3() - transform.TransformPoint(polyArea.Center),  tmpVert - transform.TransformPoint(polyArea.Center), polyArea.Normal);
+//					float angle2 = Math3D.SignedVectorAngle(v2.ToVector3() - transform.TransformPoint(polyArea.Center),  tmpVert - transform.TransformPoint(polyArea.Center), polyArea.Normal);
+//					//Debug.Log("a1: " + angle1 + " - a2: " + angle2);
+//					if (angle1 < angle2) 
+//					{ 
+//						return -1; 
+//					} 
+//					else if (angle1 > angle2) 
+//					{ 
+//						return 1; 
+//					} 
+//					return 0; 
+//				});
+
+				VoronoiRegions.Add(new VoronoiRegion(Triangulation.CreateVoronoi<Vertex2, Cell2>(vertices), convexPoly, z, polyArea.Normal));
 			}
 
 //			Mesh mesh = new Mesh();

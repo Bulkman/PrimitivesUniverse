@@ -822,6 +822,34 @@ public static class Math2D
 		int p = ( 1 << Log2(i) );
 		return p < i ? 2 * p : p;
 	}
+
+	public static float LineLineIntersection(Vector2 PosA, Vector2 PosA2, Vector2 PosB, Vector2 PosB2)
+	{
+		
+		Vector2 dirA = PosA2 - PosA;
+		Vector2 dirB = PosB2 - PosB;
+		Vector2 normalB = new Vector2(-dirB.y, dirB.x);
+		
+		float dot = Vector2.Dot (dirA, normalB);
+		
+		if(dot == 0.0f)
+			return -1.0f;
+		
+		float ratioA = Vector2.Dot(PosB - PosA, normalB)/dot;
+		
+		if((ratioA < 0.0f) || (ratioA > 1.0f))
+			return -1.0f;
+		
+		Vector2 crossPos = PosA + ratioA * dirA;
+		
+		float ratioB = Vector2.Dot (crossPos - PosB, dirB)/Vector2.Dot (dirB, dirB);
+		
+		if((ratioB < 0.0f) || (ratioB > 1.0f))
+			return -1.0f;
+		else
+			return ratioA;
+		
+	}
 	
 	// some constants
 
@@ -1646,6 +1674,62 @@ public struct ConvexPoly2 : ICollisionBasics
 		return true;
 	}
 
+	public Vector2 IntersectLine(Vector2 p0, Vector2 p1)
+	{
+		float  tE = 0;              // the maximum entering segment parameter
+		float  tL = 1;              // the minimum leaving segment parameter
+		float  t, N, D;             // intersect parameter t = N / D
+		Vector2 dS = p1- p0;     // the  segment direction vector
+		Vector2 e;                   // edge vector
+		// Vector ne;               // edge outward normal (not explicit in code)
+		
+		for (int i = 0; i < Size(); i++)   // process polygon edge V[i]V[i+1]
+		{
+			e = Planes[i + 1].Base - Planes[i].Base;
+			N = perp(e, p0 - Planes[i].Base); // = -dot(ne, S.P0 - V[i])
+			D = -perp(e, dS);       // = dot(ne, dS)
+			if (fabs(D) < SMALL_NUM) {  // S is nearly parallel to this edge
+				if (N < 0)              // P0 is outside this edge, so
+					return FALSE;      // S is outside the polygon
+				else                    // S cannot cross this edge, so
+					continue;          // ignore this edge
+			}
+			
+			t = N / D;
+			if (D < 0) {            // segment S is entering across this edge
+				if (t > tE) {       // new max tE
+					tE = t;
+					if (tE > tL)   // S enters after leaving polygon
+						return FALSE;
+				}
+			}
+			else {                  // segment S is leaving across this edge
+				if (t < tL) {       // new min tL
+					tL = t;
+					if (tL < tE)   // S leaves before entering polygon
+						return FALSE;
+				}
+			}
+		}
+		
+		// tE <= tL implies that there is a valid intersection subsegment
+		IS->P0 = S.P0 + tE * dS;   // = P(tE) = point where S enters polygon
+		IS->P1 = S.P0 + tL * dS;   // = P(tL) = point where S leaves polygon
+		return TRUE;
+	}
+
+	public bool ContainsPoint (Vector2 point)
+	{ 
+		uint j = Size()-1; 
+		bool inside = false; 
+		for (uint i = 0; i < Size(); j = i++) { 
+			if ( ((Planes[i].Base.y <= point.y && point.y < Planes[j].Base.y) || (Planes[j].Base.y <= point.y && point.y < Planes[i].Base.y)) && 
+			    (point.x < (Planes[j].Base.x - Planes[i].Base.x) * (point.y - Planes[i].Base.y) / (Planes[j].Base.y - Planes[i].Base.y) + Planes[i].Base.x)) 
+				inside = !inside; 
+		} 
+		return inside; 
+	}
+	
 	public float ClosestSurfacePoint( Vector2 point)
 	{
 		float sign = 1;

@@ -15,11 +15,6 @@ public class Vertex3 : IVertex
 	{
 		Position = new double[] { x, y, z };
 	}
-
-	public Vertex3(Vector3 vector3)
-	{
-		Position = new double[] { vector3.x, vector3.y, vector3.z };
-	}
 	
 	public Vector3 ToVector3() {
 		return new Vector3((float)Position[0], (float)Position[1], (float)Position[2]);

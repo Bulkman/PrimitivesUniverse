@@ -15,6 +15,16 @@ public class Vertex2 : IVertex
 		Position = new double[] { x, y };
 	}
 
+	public Vertex2(Vector2 v2)
+	{
+		Position = new double[] { v2.x, v2.y };
+	}
+
+	public Vertex2(Vector3 v3)
+	{
+		Position = new double[] { v3.x, v3.y };
+	}
+
 	public Vector2 ToVector2() {
 		return new Vector2((float)Position[0], (float)Position[1]);
 	}
