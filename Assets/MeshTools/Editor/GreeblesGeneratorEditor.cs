@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEditor;
 
@@ -58,26 +58,27 @@ namespace MeshTools {
 						foreach(var edge in region.RegionMesh.Edges)
 						{
 							Vector2 circumcenterV1 = edge.Source.Circumcenter;
+							Vector2 circumcenterV2 = edge.Target.Circumcenter;
+
 							if(!region.ConvexPoly.ContainsPoint(circumcenterV1) && checkIntersection){
-								float sign = 0;
-								Vector2 tmpVec = Vector2.zero;
-								region.ConvexPoly.ClosestSurfacePoint(circumcenterV1, out tmpVec, out sign);
-								if(sign >= 0)
+								Vector2 tmpVec;
+								if(region.ConvexPoly.IntersectLine(circumcenterV1, circumcenterV2, out tmpVec)){
 									circumcenterV1 = tmpVec;
+								}
 							}
+
+							if(!region.ConvexPoly.ContainsPoint(circumcenterV2) && checkIntersection){
+								Vector2 tmpVec;
+								if(region.ConvexPoly.IntersectLine(circumcenterV1, circumcenterV2, out tmpVec)){
+									circumcenterV2 = tmpVec;
+								}
+							}
+
 							Vector3 v1 = circumcenterV1;
 							v1.z = region.Z;
 							v1 = Quaternion.FromToRotation(Vector3.forward, region.Normal) * v1;
 							v1 += region.Normal * 0.001f;
 
-							Vector2 circumcenterV2 = edge.Target.Circumcenter;
-							if(!region.ConvexPoly.ContainsPoint(circumcenterV2) && checkIntersection){
-								float sign = 0;
-								Vector2 tmpVec = Vector2.zero;
-								region.ConvexPoly.ClosestSurfacePoint(circumcenterV2, out tmpVec, out sign);
-								if(sign >= 0)
-									circumcenterV2 = tmpVec;
-							}
 							Vector3 v2 = circumcenterV2;
 							v2.z = region.Z;
 							v2 = Quaternion.FromToRotation(Vector3.forward, region.Normal) * v2;
@@ -86,6 +87,39 @@ namespace MeshTools {
 							GL.Vertex(v1);
 							GL.Vertex(v2);
 						}
+
+						GL.Color( Color.magenta );
+						Vector3 bounds00 = region.ConvexPoly.CalcBounds().Point00;
+						bounds00.z = region.Z;
+						bounds00 = Quaternion.FromToRotation(Vector3.forward, region.Normal) * bounds00;
+						bounds00 += region.Normal * 0.001f;
+
+						Vector3 bounds01 = region.ConvexPoly.CalcBounds().Point01;
+						bounds01.z = region.Z;
+						bounds01 = Quaternion.FromToRotation(Vector3.forward, region.Normal) * bounds01;
+						bounds01 += region.Normal * 0.001f;
+
+						Vector3 bounds11 = region.ConvexPoly.CalcBounds().Point11;
+						bounds11.z = region.Z;
+						bounds11 = Quaternion.FromToRotation(Vector3.forward, region.Normal) * bounds11;
+						bounds11 += region.Normal * 0.001f;
+
+						Vector3 bounds10 = region.ConvexPoly.CalcBounds().Point10;
+						bounds10.z = region.Z;
+						bounds10 = Quaternion.FromToRotation(Vector3.forward, region.Normal) * bounds10;
+						bounds10 += region.Normal * 0.001f;
+
+						GL.Vertex(bounds00);
+						GL.Vertex(bounds01);
+
+						GL.Vertex(bounds01);
+						GL.Vertex(bounds11);
+
+						GL.Vertex(bounds11);
+						GL.Vertex(bounds10);
+
+						GL.Vertex(bounds10);
+						GL.Vertex(bounds00);
 					}
 				}
 
@@ -129,7 +163,7 @@ namespace MeshTools {
 					Handles.color = Color.yellow;
 					foreach(var point in componentRef.VoronoiPoints)
 					{
-						Handles.DotCap(0, point, Quaternion.identity, 0.01f);
+						Handles.DotCap(0, point, Quaternion.identity, 0.003f);
 					}
 				}
 			}

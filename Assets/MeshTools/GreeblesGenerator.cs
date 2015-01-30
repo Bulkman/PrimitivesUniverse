@@ -136,7 +136,7 @@ namespace MeshTools {
 				VoronoiRegions.Add(new VoronoiRegion(Triangulation.CreateVoronoi<Vertex2, Cell2>(vertices), convexPoly, z, polyArea.Normal));
 			}
 
-//			Mesh mesh = new Mesh();
+//			Mesh mesh = new Mesh();s
 
 
 //			#region Vertices
